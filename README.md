@@ -77,8 +77,8 @@ flowchart LR
 
 ### 1. Clone repo
 ```bash
-git clone https://github.com/yourusername/streaming_pipeline.git
-cd streaming_pipeline
+git clone https://github.com/yourusername/streaming-pipeline.git
+cd streaming-pipeline
 cp .env.example .env
 ```
 
