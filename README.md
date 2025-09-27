@@ -11,13 +11,12 @@ The goal is to demonstrate end-to-end **streaming data engineering skills**: rea
 ---
 
 ## 📐 Architecture
- 
 ```mermaid
-flowchart TD
+flowchart LR
     A[NOAA Buoy API] --> B[Kafka Producer]
     B --> C[Kafka Topic]
     C --> D[Kafka Consumer]
-    D --> E[S3 Curated Zone (Parquet)]
+    D --> E["S3 Curated Zone (Parquet)"]
     E --> F[Snowflake Stage]
     F --> G[Snowpipe]
     G --> H[Snowflake Table BUOY_CURATED]
@@ -122,7 +121,7 @@ python src/consumer/consumer_buoy.py
 
 Below is a snapshot of Parquet files ingested into S3 by the pipeline:  
 
-![S3 Inflow](./assets/s3_inflow_image.png)
+![S3 Inflow](./assets/s3_inflow.png)
 
 *Example of NOAA buoy data successfully ingested into Amazon S3.*  
 
