@@ -1,0 +1,209 @@
+# Real-Time NOAA Buoy Data Pipeline
+
+![Kafka](https://img.shields.io/badge/Kafka-Streaming-black)
+![AWS S3](https://img.shields.io/badge/AWS-S3-green)
+![Snowflake](https://img.shields.io/badge/Snowflake-Cloud-lightblue)
+
+A **real-time data pipeline** that ingests live buoy sensor data from NOAA, streams it through **Kafka (Redpanda)**, curates and transforms the data, lands it in **Amazon S3**, and automatically loads it into **Snowflake** via **Snowpipe** for analytics.  
+
+The goal is to demonstrate end-to-end **streaming data engineering skills**: real-time ingestion, message queuing, schema enforcement, cloud landing zones, and automated warehouse loading.
+
+---
+
+## 📐 Architecture
+ 
+```mermaid
+flowchart TD
+    A[NOAA Buoy API] --> B[Kafka Producer]
+    B --> C[Kafka Topic]
+    C --> D[Kafka Consumer]
+    D --> E[S3 Curated Zone (Parquet)]
+    E --> F[Snowflake Stage]
+    F --> G[Snowpipe]
+    G --> H[Snowflake Table BUOY_CURATED]
+```
+
+---
+
+## ✅ Features
+
+- **Streaming ingestion** from NOAA buoy station `51004` (configurable)
+- **Kafka (Redpanda)** for message streaming
+- **Data curation**: timestamp normalization, missing value handling, Beaufort wind scale classification
+- **Schema enforcement** with Parquet for strong typing
+- **Cloud landing zone**: Amazon S3 bucket stores curated Parquet files
+- **Automated loading** into Snowflake via Snowpipe
+- **Analytics-ready table**: `BUOY_CURATED` with clean schema
+
+---
+
+## ⚡ Tech Stack
+- **Kafka / Redpanda** – streaming backbone  
+- **Python** – producer + consumer  
+- **boto3** – S3 integration  
+- **Snowflake + Snowpipe** – warehouse + auto-ingestion  
+- **Pandas** – schema enforcement, Parquet output  
+- **Docker Compose** – local infrastructure for Kafka  
+
+---
+
+## 📦 Prerequisites
+
+- **Docker Desktop** (or Docker Engine + Compose) installed and running  
+- **Python 3.11+** installed locally  
+- A valid **Snowflake account** (for warehouse integration)  
+- An **AWS account** with:
+  - S3 bucket (landing zone for curated data)  
+  - IAM role configured for Snowpipe auto-ingestion 
+
+---
+
+## 📂 Project Structure
+```
+.
+├── src/
+│   ├── producer/
+│   │   └── producer_buoy.py
+│   ├── consumer/
+│   │   └── consumer_buoy.py
+├── docker-compose.yml
+├── requirements.txt
+├── .env.example
+└── README.md
+```
+
+---
+
+## 🛠 Setup
+
+### 1. Clone repo
+```bash
+git clone https://github.com/yourusername/streaming_pipeline.git
+cd streaming_pipeline
+cp .env.example .env
+```
+
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Environment variables
+Fill `.env` with your values:
+```
+BOOTSTRAP_SERVERS=localhost:9092
+KAFKA_TOPIC=buoy_station_51004
+STATION_ID=51004
+AWS_REGION=us-east-1
+S3_BUCKET=your-bucket-name
+S3_PREFIX=buoy/curated/parquet
+AWS_ACCESS_KEY_ID=xxx
+AWS_SECRET_ACCESS_KEY=xxx
+```
+
+### 4. Start Kafka/Redpanda
+```bash
+docker compose up -d
+```
+
+### 5. Run producer
+```bash
+python src/producer/producer_buoy.py
+```
+
+### 6. Run consumer
+```bash
+python src/consumer/consumer_buoy.py
+```
+
+---
+
+## 📊 Pipeline Output
+
+Below is a snapshot of Parquet files ingested into S3 by the pipeline:  
+
+![S3 Inflow](./assets/s3_inflow_image.png)
+
+*Example of NOAA buoy data successfully ingested into Amazon S3.*  
+
+
+---
+
+## ❄️ Snowflake Setup
+
+```sql
+-- 1. Create stage & integration
+CREATE STORAGE INTEGRATION buoy_integration
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = S3
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = '<your-aws-role-arn>'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://your-bucket-name/buoy/curated/parquet/');
+
+-- 2. Create external stage
+CREATE OR REPLACE STAGE buoy_stage
+  STORAGE_INTEGRATION = buoy_integration
+  URL = 's3://your-bucket-name/buoy/curated/parquet/';
+
+-- 3. Create target table
+CREATE OR REPLACE TABLE BUOY_CURATED (
+    timestamp TIMESTAMP_NTZ,
+    wind_dir_deg FLOAT,
+    wind_speed_mps FLOAT,
+    wind_gust_mps FLOAT,
+    wave_height_m FLOAT,
+    wave_period_s FLOAT,
+    wave_dir_deg FLOAT,
+    pressure_hpa FLOAT,
+    air_temp_c FLOAT,
+    water_temp_c FLOAT,
+    dewpoint_temp_c FLOAT,
+    visibility_nmi FLOAT,
+    tide_m FLOAT,
+    wind_category STRING
+);
+
+-- 4. Create Snowpipe
+CREATE OR REPLACE PIPE buoy_pipe
+  AUTO_INGEST = TRUE
+  AS
+  COPY INTO BUOY_CURATED
+  FROM @buoy_stage
+  FILE_FORMAT = (TYPE = PARQUET)
+  MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+  ON_ERROR = CONTINUE;
+```
+
+---
+
+## 🔎 Example Query
+
+```sql
+SELECT 
+    DATE_TRUNC('hour', timestamp) AS hour,
+    AVG(wind_speed_mps) AS avg_wind_speed,
+    AVG(wave_height_m) AS avg_wave_height
+FROM BUOY_CURATED
+GROUP BY hour
+ORDER BY hour DESC
+LIMIT 10;
+```
+
+---
+
+## 📌 Notes
+- NOAA “MM” values are treated as missing measurements
+- Timestamps parsed natively into TIMESTAMP_NTZ in Snowflake  
+- Easily configurable for more buoy stations via `.env`  
+
+---
+
+## 🧹 Tear Down (Cleanup)
+```bash
+docker compose down	
+docker compose down --volumes --remove-orphans
+```
+
+---
+
+📫 Connect with me: [LinkedIn](https://www.linkedin.com/in/wes-martin/) | [GitHub Portfolio](https://github.com/WesJM/WesJM)
