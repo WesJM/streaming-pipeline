@@ -84,6 +84,12 @@ cp .env.example .env
 
 ### 2. Install dependencies
 ```bash
+# (Optional but recommended) create a virtual environment
+python -m venv venv
+source venv/bin/activate   # On macOS/Linux
+venv\Scripts\activate      # On Windows
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -106,11 +112,13 @@ docker compose up -d
 ```
 
 ### 5. Run producer
+Run the producer in a **separate terminal**:  
 ```bash
 python src/producer/producer_buoy.py
 ```
 
 ### 6. Run consumer
+Run the consumer in a **separate terminal**: 
 ```bash
 python src/consumer/consumer_buoy.py
 ```
