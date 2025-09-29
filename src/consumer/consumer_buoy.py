@@ -13,7 +13,7 @@ load_dotenv()
 TOPIC = os.getenv('KAFKA_TOPIC', 'buoy_station_51004')
 
 # Batch number of messages to process
-BATCH_SIZE = int(os.getenv('BATCH_SIZE', 10)) 
+BATCH_SIZE = int(os.getenv('BATCH_SIZE', 10))
 
 # S3 config (from env or hardcoded for testing)
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')

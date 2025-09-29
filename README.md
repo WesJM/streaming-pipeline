@@ -95,15 +95,22 @@ pip install -r requirements.txt
 
 ### 3. Environment variables
 Fill `.env` with your values:
-```
+
+```bash
 BOOTSTRAP_SERVERS=localhost:9092
 KAFKA_TOPIC=buoy_station_51004
 STATION_ID=51004
+
 AWS_REGION=us-east-1
 S3_BUCKET=your-bucket-name
 S3_PREFIX=buoy/curated/parquet
 AWS_ACCESS_KEY_ID=xxx
 AWS_SECRET_ACCESS_KEY=xxx
+
+# Records per file written to S3
+# 1 = fast demo mode (default in .env.example)
+# 10 = production-like batching
+BATCH_SIZE=1
 ```
 
 ### 4. Start Kafka/Redpanda
@@ -124,6 +131,28 @@ python src/consumer/consumer_buoy.py
 ```
 
 ---
+## ⚖️ Batching vs. Real-Time Flush
+
+By default, the consumer writes **one record per file** to S3.  
+This makes the pipeline more **demo-friendly**: when you run it locally, you can immediately see data land in S3 and flow into Snowflake without waiting for a large batch.
+
+In production, though, writing one row per file is inefficient — it creates too many small “micro files” in S3 and slows down downstream queries.  
+A more realistic approach is to **batch records together** (e.g., 10–100 per file) before writing.
+
+You can configure this behavior in the `.env` file:
+
+```env
+# Write one record per file (fast demo mode)
+BATCH_SIZE=1
+
+# Write 10 records per file (more production-like)
+BATCH_SIZE=10
+```
+👉 **Recommendation:** Keep `BATCH_SIZE=1` for trying out the project, and switch to `BATCH_SIZE=10` (or larger) to simulate more realistic data engineering practice.
+
+---
+
+You can configure this behavior in the `.env` file:
 
 ## 📊 Pipeline Output
 
@@ -132,7 +161,6 @@ Below is a snapshot of Parquet files ingested into S3 by the pipeline:
 ![S3 Inflow](./assets/s3_inflow.png)
 
 *Example of NOAA buoy data successfully ingested into Amazon S3.*  
-
 
 ---
 
@@ -201,7 +229,10 @@ LIMIT 10;
 ## 📌 Notes
 - NOAA “MM” values are treated as missing measurements
 - Timestamps parsed natively into TIMESTAMP_NTZ in Snowflake  
-- Easily configurable for more buoy stations via `.env`  
+- Easily configurable for more buoy stations via `.env`
+- `BATCH_SIZE` trade-off:
+  - `1` = fast demo mode (many small files, immediate results)  
+  - `10` = production-like (fewer, larger files, more efficient for storage) 
 
 ---
 
