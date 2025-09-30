@@ -244,4 +244,4 @@ docker compose down --volumes --remove-orphans
 
 ---
 
-📫 Connect with me: [LinkedIn](https://www.linkedin.com/in/wes-martin/) | [Portfolio](https://github.com/WesJM/data-engineering-portfolio)
+📫 Connect with me: [LinkedIn](https://www.linkedin.com/in/wes-martin/) | [GitHub Portfolio](https://github.com/WesJM/data-engineering-portfolio)
