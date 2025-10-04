@@ -4,7 +4,7 @@
 ![AWS S3](https://img.shields.io/badge/AWS-S3-green)
 ![Snowflake](https://img.shields.io/badge/Snowflake-Cloud-lightblue)
 
-A **real-time data pipeline** that ingests live buoy sensor data from NOAA, streams it through **Kafka (Redpanda)**, curates and transforms the data, lands it in **Amazon S3**, and automatically loads it into **Snowflake** via **Snowpipe** for analytics.  
+A **real-time data pipeline** that ingests live buoy sensor data from the [National Data Buoy Center](https://www.ndbc.noaa.gov) of NOAA. The pipeline streams through **Kafka (Redpanda)**, curates and transforms the data, landing in **Amazon S3**, and automatically outputs to **Snowflake** via **Snowpipe**.  
 
 The goal is to demonstrate end-to-end **streaming data engineering skills**: real-time ingestion, message queuing, schema enforcement, cloud landing zones, and automated warehouse loading.
 
